@@ -12,10 +12,21 @@ export async function DELETE() {
     }
 
     await dbConnect();
-    await ShoppingCart.deleteMany({ 
-      userId: session.user.id,
-      completed: true 
-    });
+    
+    // Find the user's cart and remove all completed items
+    const cart = await ShoppingCart.findOneAndUpdate(
+      { userId: session.user.id },
+      { 
+        $pull: { 
+          items: { completed: true } 
+        } 
+      },
+      { new: true }
+    );
+
+    if (!cart) {
+      return NextResponse.json({ message: 'No cart found' });
+    }
 
     return NextResponse.json({ message: 'Completed items cleared' });
   } catch (error) {

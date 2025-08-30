@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { Navigation } from '@/components/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,8 @@ interface ShoppingCartItem {
   unit: string;
   completed: boolean;
   recipeTitle?: string;
+  recipeId?: string;
+  addedAt: Date;
 }
 
 export default function ShoppingCartPage() {
@@ -112,11 +115,14 @@ export default function ShoppingCartPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <>
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -124,19 +130,21 @@ export default function ShoppingCartPage() {
   const pendingItems = items.filter(item => !item.completed);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <ShoppingCart className="h-8 w-8" />
-          <div>
-            <h1 className="text-3xl font-bold">Shopping Cart</h1>
-            <p className="text-gray-600">
-              {items.length === 0 
-                ? 'Your shopping cart is empty' 
-                : `${pendingItems.length} items remaining, ${completedItems.length} completed`
-              }
-            </p>
-          </div>
+    <>
+      <Navigation />
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="h-8 w-8" />
+            <div>
+              <h1 className="text-3xl font-bold">Shopping Cart</h1>
+              <p className="text-gray-600">
+                {items.length === 0 
+                  ? 'Your shopping cart is empty' 
+                  : `${pendingItems.length} items remaining, ${completedItems.length} completed`
+                }
+              </p>
+            </div>
         </div>
 
         {items.length > 0 && (
@@ -265,6 +273,7 @@ export default function ShoppingCartPage() {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

@@ -1,23 +1,25 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IShoppingCartItem extends Document {
+export interface IShoppingCartItem {
   _id: string;
-  userId: string;
   recipeId?: string;
   recipeTitle?: string;
   ingredient: string;
   quantity: number;
   unit: string;
   completed: boolean;
+  addedAt: Date;
+}
+
+export interface IShoppingCart extends Document {
+  _id: string;
+  userId: string;
+  items: IShoppingCartItem[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-const ShoppingCartSchema = new Schema<IShoppingCartItem>({
-  userId: {
-    type: String,
-    required: true,
-  },
+const ShoppingCartItemSchema = new Schema<IShoppingCartItem>({
   recipeId: {
     type: String,
   },
@@ -40,12 +42,24 @@ const ShoppingCartSchema = new Schema<IShoppingCartItem>({
     type: Boolean,
     default: false,
   },
+  addedAt: {
+    type: Date,
+    default: Date.now,
+  },
+}, { _id: true }); // Ensure each item has its own _id
+
+const ShoppingCartSchema = new Schema<IShoppingCart>({
+  userId: {
+    type: String,
+    required: true,
+    unique: true, // One cart per user
+  },
+  items: [ShoppingCartItemSchema],
 }, {
   timestamps: true,
 });
 
 // Create indexes
 ShoppingCartSchema.index({ userId: 1 });
-ShoppingCartSchema.index({ recipeId: 1 });
 
-export const ShoppingCart = mongoose.models.ShoppingCart || mongoose.model<IShoppingCartItem>('ShoppingCart', ShoppingCartSchema);
+export const ShoppingCart = mongoose.models.ShoppingCart || mongoose.model<IShoppingCart>('ShoppingCart', ShoppingCartSchema);

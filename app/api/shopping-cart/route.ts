@@ -12,11 +12,17 @@ export async function GET() {
     }
 
     await dbConnect();
-    const items = await ShoppingCart.find({
-      userId: session.user.id
-    }).sort({ createdAt: -1 });
+    
+    // Find the user's shopping cart
+    let cart = await ShoppingCart.findOne({ userId: session.user.id });
+    
+    // If no cart exists, return empty array
+    if (!cart) {
+      return NextResponse.json([]);
+    }
 
-    return NextResponse.json(items);
+    // Return the items array from the cart
+    return NextResponse.json(cart.items || []);
   } catch (error) {
     console.error('Error fetching shopping cart:', error);
     return NextResponse.json(
@@ -38,23 +44,41 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    // Create shopping cart items from recipe ingredients
-    const items = ingredients.map((ingredient: { displayText: string; quantity: number; unit: string }) => ({
-      userId: session.user.id,
+    // Find or create the user's shopping cart
+    let cart = await ShoppingCart.findOne({ userId: session.user.id });
+    
+    if (!cart) {
+      cart = new ShoppingCart({
+        userId: session.user.id,
+        items: []
+      });
+    }
+
+    // Create new items from recipe ingredients
+    const newItems = ingredients.map((ingredient: { displayText: string; quantity: number; unit: string }) => ({
       recipeId,
       recipeTitle,
       ingredient: ingredient.displayText,
       quantity: ingredient.quantity,
       unit: ingredient.unit,
       completed: false,
+      addedAt: new Date(),
     }));
 
-    const createdItems = await ShoppingCart.insertMany(items);
-    return NextResponse.json(createdItems);
+    // Add new items to the cart
+    cart.items.push(...newItems);
+    
+    // Save the cart
+    await cart.save();
+
+    return NextResponse.json({ 
+      message: `Added ${newItems.length} items to cart`,
+      itemsAdded: newItems.length 
+    });
   } catch (error) {
     console.error('Error adding to shopping cart:', error);
     return NextResponse.json(
-      { error: 'Failed to add to shopping cart' },
+      { error: 'Failed to add items to shopping cart' },
       { status: 500 }
     );
   }
@@ -68,7 +92,16 @@ export async function DELETE() {
     }
 
     await dbConnect();
-    await ShoppingCart.deleteMany({ userId: session.user.id });
+    
+    // Find and clear the user's cart
+    const cart = await ShoppingCart.findOne({ userId: session.user.id });
+    
+    if (!cart) {
+      return NextResponse.json({ message: 'Cart already empty' });
+    }
+
+    cart.items = [];
+    await cart.save();
 
     return NextResponse.json({ message: 'Shopping cart cleared' });
   } catch (error) {

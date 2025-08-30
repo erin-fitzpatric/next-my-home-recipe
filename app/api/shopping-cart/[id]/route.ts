@@ -18,17 +18,31 @@ export async function PATCH(
     const body = await request.json();
 
     await dbConnect();
-    const item = await ShoppingCart.findOneAndUpdate(
-      { _id: id, userId: session.user.id },
-      body,
+    
+    // Find the user's cart and update the specific item
+    const cart = await ShoppingCart.findOneAndUpdate(
+      { 
+        userId: session.user.id,
+        'items._id': id 
+      },
+      { 
+        $set: {
+          'items.$.completed': body.completed,
+          'items.$.quantity': body.quantity || undefined,
+          'items.$.unit': body.unit || undefined,
+        }
+      },
       { new: true }
     );
 
-    if (!item) {
+    if (!cart) {
       return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
-    return NextResponse.json(item);
+    // Find and return the updated item
+    const updatedItem = cart.items.find((item: any) => item._id.toString() === id);
+    
+    return NextResponse.json(updatedItem);
   } catch (error) {
     console.error('Error updating shopping cart item:', error);
     return NextResponse.json(
@@ -51,13 +65,20 @@ export async function DELETE(
     const { id } = await params;
 
     await dbConnect();
-    const item = await ShoppingCart.findOneAndDelete({
-      _id: id,
-      userId: session.user.id
-    });
+    
+    // Find the user's cart and remove the specific item
+    const cart = await ShoppingCart.findOneAndUpdate(
+      { userId: session.user.id },
+      { 
+        $pull: { 
+          items: { _id: id } 
+        } 
+      },
+      { new: true }
+    );
 
-    if (!item) {
-      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    if (!cart) {
+      return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
     }
 
     return NextResponse.json({ message: 'Item removed from cart' });
