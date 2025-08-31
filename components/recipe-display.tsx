@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Grid, List, Plus, Clock, Users, MoreVertical, Edit, Trash2, Copy, ShoppingCart, Search, Filter, X } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 interface Recipe {
   _id: string;
@@ -177,7 +178,7 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
         try {
           const recipe = recipes.find(r => r._id === recipeId);
           if (!recipe) {
-            alert('Recipe not found');
+            toast.error('Recipe not found');
             return;
           }
 
@@ -201,9 +202,9 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
                 newSet.delete(recipeId);
                 return newSet;
               });
-              alert(`🗑️ Removed "${recipe.title}" ingredients from your shopping cart!`);
+              toast.success(`Removed "${recipe.title}" ingredients from your shopping cart!`);
             } else {
-              alert('❌ Failed to remove from shopping cart. Please try again.');
+              toast.error('Failed to remove from shopping cart. Please try again.');
             }
           } else {
             // Add to cart
@@ -221,14 +222,14 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
             
             if (response.ok) {
               setRecipesInCart(prev => new Set(prev).add(recipeId));
-              alert(`✅ Added ${recipe.ingredients.length} ingredients from "${recipe.title}" to your shopping cart!`);
+              toast.success(`Added ${recipe.ingredients.length} ingredients from "${recipe.title}" to your shopping cart!`);
             } else {
-              alert('❌ Failed to add to shopping cart. Please try again.');
+              toast.error('Failed to add to shopping cart. Please try again.');
             }
           }
         } catch (error) {
           console.error('Error adding to cart:', error);
-          alert('Failed to add to shopping cart');
+          toast.error('Failed to add to shopping cart');
         }
         break;
     }
