@@ -240,7 +240,7 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
             >
               <List className="h-4 w-4" />
             </Button>
-            <Button onClick={() => router.push('/add-recipe')}>
+            <Button onClick={() => router.push('/add-recipe')} className="cursor-pointer">
               <Plus className="h-4 w-4 mr-2" />
               Add Recipe
             </Button>

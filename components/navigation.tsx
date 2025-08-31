@@ -47,7 +47,7 @@ export function Navigation() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary ${
+                  className={`flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
                     pathname === item.href
                       ? 'text-primary'
                       : 'text-muted-foreground'
