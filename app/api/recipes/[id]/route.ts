@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
-import { Recipe } from '@/models/Recipe';
-import { ShoppingCart } from '@/models/ShoppingCart';
+import { Recipe, type IRecipeIngredient } from '@/models/Recipe';
+import { ShoppingCart, type IShoppingCartItem } from '@/models/ShoppingCart';
 
 export async function GET(
   request: NextRequest,
@@ -69,23 +69,23 @@ export async function PUT(
       const cart = await ShoppingCart.findOne({ userId: session.user.id });
       
       if (cart) {
-        const recipeInCart = cart.items.some((item: any) => item.recipeId === id);
+        const recipeInCart = cart.items.some((item: IShoppingCartItem) => item.recipeId === id);
         
         if (recipeInCart && recipe.ingredients) {
           // Recipe is in cart, update the cart items
-          const existingItems = cart.items.filter((item: any) => item.recipeId === id);
+          const existingItems = cart.items.filter((item: IShoppingCartItem) => item.recipeId === id);
           
           // Smart merge: preserve completion status for matching ingredients
           const existingItemsMap = new Map();
-          existingItems.forEach((item: any) => {
+          existingItems.forEach((item: IShoppingCartItem) => {
             existingItemsMap.set(item.ingredient.toLowerCase(), item);
           });
 
           // Remove old items for this recipe
-          cart.items = cart.items.filter((item: any) => item.recipeId !== id);
+          cart.items = cart.items.filter((item: IShoppingCartItem) => item.recipeId !== id);
 
           // Add updated ingredients
-          const updatedIngredients = recipe.ingredients.map((ingredient: any) => {
+          const updatedIngredients = recipe.ingredients.map((ingredient: IRecipeIngredient) => {
             const existingItem = existingItemsMap.get(ingredient.displayText.toLowerCase());
             
             return {

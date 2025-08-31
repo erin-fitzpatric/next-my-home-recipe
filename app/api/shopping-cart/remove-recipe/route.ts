@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
-import { ShoppingCart } from '@/models/ShoppingCart';
+import { ShoppingCart, type IShoppingCartItem } from '@/models/ShoppingCart';
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -32,7 +32,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remove all items that match the recipeId
-    cart.items = cart.items.filter((item: any) => item.recipeId !== recipeId);
+    cart.items = cart.items.filter((item: IShoppingCartItem) => item.recipeId !== recipeId);
     
     await cart.save();
 

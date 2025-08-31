@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Clock, Users, ChefHat, Edit, Trash2, ShoppingCart } from 'lucide-react';
@@ -43,36 +44,29 @@ export default function RecipePage() {
   useEffect(() => {
     // Don't fetch if we're in the process of deleting
     if (recipeId && session?.user?.id && !isDeleting) {
+      const fetchRecipe = async () => {
+        try {
+          const response = await fetch(`/api/recipes/${recipeId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setRecipe(data);
+          } else if (response.status === 404) {
+            // Recipe not found - redirect to dashboard
+            router.push('/dashboard');
+            return;
+          } else {
+            setError('Recipe not found');
+          }
+        } catch {
+          setError('Failed to load recipe');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
       fetchRecipe();
     }
-  }, [recipeId, session?.user?.id, isDeleting]);
-
-  // Redirect to dashboard if recipe not found (but not when deleting)
-  useEffect(() => {
-    if (!loading && !isDeleting && (error || !recipe)) {
-      router.replace('/dashboard');
-    }
-  }, [loading, error, recipe, router, isDeleting]);
-
-  const fetchRecipe = async () => {
-    try {
-      const response = await fetch(`/api/recipes/${recipeId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setRecipe(data);
-      } else if (response.status === 404) {
-        // Recipe not found - redirect to dashboard
-        router.push('/dashboard');
-        return;
-      } else {
-        setError('Recipe not found');
-      }
-    } catch (err) {
-      setError('Failed to load recipe');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [recipeId, session?.user?.id, isDeleting, router]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -101,7 +95,7 @@ export default function RecipePage() {
           alert('Failed to delete recipe');
           setIsDeleting(false); // Reset flag if deletion failed
         }
-      } catch (error) {
+      } catch {
         alert('Failed to delete recipe');
         setIsDeleting(false); // Reset flag if deletion failed
       }
@@ -284,9 +278,11 @@ export default function RecipePage() {
         {recipe.imageUrl && (
           <Card className="mt-8">
             <CardContent className="p-0">
-              <img
+              <Image
                 src={recipe.imageUrl}
                 alt={recipe.title}
+                width={800}
+                height={256}
                 className="w-full h-64 object-cover rounded-lg"
               />
             </CardContent>

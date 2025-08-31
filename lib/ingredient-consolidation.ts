@@ -82,11 +82,11 @@ export function consolidateIngredients(cartItems: CartItem[]): ConsolidatedIngre
   const groups = groupIngredientsByName(cartItems);
   const consolidated: ConsolidatedIngredient[] = [];
   
-  groups.forEach((items, baseIngredient) => {
+  groups.forEach((items) => {
     if (items.length === 1) {
       consolidated.push(createSingleItemGroup(items[0]));
     } else {
-      consolidated.push(createMultiItemGroup(items, baseIngredient));
+      consolidated.push(createMultiItemGroup(items));
     }
   });
   
@@ -117,7 +117,7 @@ function createSingleItemGroup(item: CartItem): ConsolidatedIngredient {
   };
 }
 
-function createMultiItemGroup(items: CartItem[], baseIngredient: string): ConsolidatedIngredient {
+function createMultiItemGroup(items: CartItem[]): ConsolidatedIngredient {
   const firstConversionFamily = getConversionFamily(items[0].unit);
   const canConsolidate = firstConversionFamily !== 'none' && 
     items.every(item => getConversionFamily(item.unit) === firstConversionFamily);

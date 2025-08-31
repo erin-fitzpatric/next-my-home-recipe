@@ -3,11 +3,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { Navigation } from '@/components/navigation';
+import { AddItemModal } from '@/components/add-item-modal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ShoppingCart, Trash2, Check, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Trash2, Check, X, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { consolidateIngredients, type CartItem, type ConsolidatedIngredient } from '@/lib/ingredient-consolidation';
 
 interface ShoppingCartItem {
@@ -26,6 +27,9 @@ export default function ShoppingCartPage() {
   const [items, setItems] = useState<ShoppingCartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  
+  // Add item modal state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Consolidate ingredients using useMemo for performance
   const consolidatedIngredients = useMemo(() => {
@@ -169,6 +173,32 @@ export default function ShoppingCartPage() {
     }
   };
 
+  const addIndividualItem = async (ingredient: string, quantity: number, unit: string) => {
+    try {
+      const response = await fetch('/api/shopping-cart/add-ingredient', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ingredient: ingredient,
+          quantity: quantity,
+          unit: unit,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh the cart to get updated consolidated data
+        await fetchShoppingCart();
+      } else {
+        throw new Error('Failed to add item to shopping cart');
+      }
+    } catch (error) {
+      console.error('Error adding individual item:', error);
+      throw error;
+    }
+  };
+
   // Helper functions for cleaner code
   const getGroupCompletionState = (group: ConsolidatedIngredient) => ({
     allCompleted: group.items.every(item => item.completed),
@@ -178,8 +208,27 @@ export default function ShoppingCartPage() {
   const getRelevantItems = (group: ConsolidatedIngredient, isCompleted: boolean) => 
     group.items.filter(item => item.completed === isCompleted);
 
-  const handleGroupRemoval = (group: ConsolidatedIngredient) => {
-    group.items.forEach(item => removeItem(item._id));
+  const handleGroupRemoval = async (group: ConsolidatedIngredient) => {
+    try {
+      // Delete all items in the group concurrently
+      const deletePromises = group.items.map(item => 
+        fetch(`/api/shopping-cart/${item._id}`, {
+          method: 'DELETE',
+        })
+      );
+
+      const responses = await Promise.all(deletePromises);
+      
+      if (responses.every(response => response.ok)) {
+        // Remove all items from the group from local state
+        const itemIdsToRemove = new Set(group.items.map(item => item._id));
+        setItems(items.filter(item => !itemIdsToRemove.has(item._id)));
+      } else {
+        console.error('Some items failed to delete');
+      }
+    } catch (error) {
+      console.error('Error removing group items:', error);
+    }
   };
 
   const renderIngredientDisplay = (group: ConsolidatedIngredient) => {
@@ -241,8 +290,12 @@ export default function ShoppingCartPage() {
               {/* Recipe tags */}
               {relevantItems.map((item, index) => (
                 item.recipeTitle && (
-                  <Badge key={`${item.recipeId}-${index}`} variant="secondary" className="text-xs">
-                    {item.recipeTitle}
+                  <Badge 
+                    key={`${item.recipeId}-${index}`} 
+                    variant={item.recipeTitle === 'Manual Addition' ? 'outline' : 'secondary'} 
+                    className={`text-xs ${item.recipeTitle === 'Manual Addition' ? 'border-blue-300 text-blue-700 bg-blue-50' : ''}`}
+                  >
+                    {item.recipeTitle === 'Manual Addition' ? '✋ Manual' : item.recipeTitle}
                   </Badge>
                 )
               ))}
@@ -285,8 +338,11 @@ export default function ShoppingCartPage() {
                       {item.quantity} {item.unit} {item.ingredient}
                     </span>
                     {item.recipeTitle && (
-                      <Badge variant="secondary" className="text-xs">
-                        {item.recipeTitle}
+                      <Badge 
+                        variant={item.recipeTitle === 'Manual Addition' ? 'outline' : 'secondary'} 
+                        className={`text-xs ${item.recipeTitle === 'Manual Addition' ? 'border-blue-300 text-blue-700 bg-blue-50' : ''}`}
+                      >
+                        {item.recipeTitle === 'Manual Addition' ? '✋ Manual' : item.recipeTitle}
                       </Badge>
                     )}
                   </div>
@@ -340,6 +396,17 @@ export default function ShoppingCartPage() {
 
         {items.length > 0 && (
           <div className="flex gap-2">
+            <AddItemModal
+              isOpen={isAddModalOpen}
+              onOpenChange={setIsAddModalOpen}
+              onAddItem={addIndividualItem}
+              trigger={
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              }
+            />
             {completedItems.length > 0 && (
               <Button variant="outline" onClick={clearCompleted}>
                 <Check className="h-4 w-4 mr-2" />
@@ -360,11 +427,24 @@ export default function ShoppingCartPage() {
             <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium mb-2">No items in your cart</h3>
             <p className="text-gray-600 mb-4">
-              Add ingredients to your shopping cart from your recipes.
+              Add ingredients to your shopping cart from your recipes or add individual items.
             </p>
-            <Button onClick={() => window.location.href = '/dashboard'}>
-              Browse Recipes
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <AddItemModal
+                isOpen={isAddModalOpen}
+                onOpenChange={setIsAddModalOpen}
+                onAddItem={addIndividualItem}
+                trigger={
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                }
+              />
+              <Button variant="outline" onClick={() => window.location.href = '/dashboard'}>
+                Browse Recipes
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (

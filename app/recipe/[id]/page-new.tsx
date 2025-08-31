@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, Users, ChefHat, Edit, Copy, Trash2 } from 'lucide-react';
+import { ArrowLeft, Clock, Users, ChefHat, Edit, Trash2 } from 'lucide-react';
 
 interface Recipe {
   _id: string;
@@ -40,26 +41,26 @@ export default function RecipePage() {
   const recipeId = params.id as string;
 
   useEffect(() => {
+    const fetchRecipe = async () => {
+      try {
+        const response = await fetch(`/api/recipes/${recipeId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setRecipe(data);
+        } else {
+          setError('Recipe not found');
+        }
+      } catch {
+        setError('Failed to load recipe');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (recipeId && session?.user?.id) {
       fetchRecipe();
     }
   }, [recipeId, session?.user?.id]);
-
-  const fetchRecipe = async () => {
-    try {
-      const response = await fetch(`/api/recipes/${recipeId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setRecipe(data);
-      } else {
-        setError('Recipe not found');
-      }
-    } catch (err) {
-      setError('Failed to load recipe');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -85,7 +86,7 @@ export default function RecipePage() {
         } else {
           alert('Failed to delete recipe');
         }
-      } catch (error) {
+      } catch {
         alert('Failed to delete recipe');
       }
     }
@@ -239,9 +240,11 @@ export default function RecipePage() {
         {recipe.imageUrl && (
           <Card className="mt-8">
             <CardContent className="p-0">
-              <img
+              <Image
                 src={recipe.imageUrl}
                 alt={recipe.title}
+                width={800}
+                height={256}
                 className="w-full h-64 object-cover rounded-lg"
               />
             </CardContent>

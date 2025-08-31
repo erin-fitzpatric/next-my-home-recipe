@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
-import { ShoppingCart } from '@/models/ShoppingCart';
+import { ShoppingCart, type IShoppingCartItem } from '@/models/ShoppingCart';
 
 export async function PATCH(
   request: NextRequest,
@@ -40,7 +40,7 @@ export async function PATCH(
     }
 
     // Find and return the updated item
-    const updatedItem = cart.items.find((item: any) => item._id.toString() === id);
+    const updatedItem = cart.items.find((item: IShoppingCartItem) => item._id.toString() === id);
     
     return NextResponse.json(updatedItem);
   } catch (error) {

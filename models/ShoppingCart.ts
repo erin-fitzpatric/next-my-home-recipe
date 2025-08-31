@@ -59,7 +59,4 @@ const ShoppingCartSchema = new Schema<IShoppingCart>({
   timestamps: true,
 });
 
-// Create indexes
-ShoppingCartSchema.index({ userId: 1 });
-
 export const ShoppingCart = mongoose.models.ShoppingCart || mongoose.model<IShoppingCart>('ShoppingCart', ShoppingCartSchema);

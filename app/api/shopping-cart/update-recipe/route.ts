@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
-import { ShoppingCart } from '@/models/ShoppingCart';
+import { ShoppingCart, type IShoppingCartItem } from '@/models/ShoppingCart';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Find existing items for this recipe
-    const existingItems = cart.items.filter((item: any) => item.recipeId === recipeId);
+    const existingItems = cart.items.filter((item: IShoppingCartItem) => item.recipeId === recipeId);
     
     if (existingItems.length === 0) {
       return NextResponse.json(
@@ -42,12 +42,12 @@ export async function PUT(request: NextRequest) {
     }
 
     // Smart merge: compare old vs new ingredients
-    const updatedItems = [];
-    const addedItems = [];
+    const updatedItems: IShoppingCartItem[] = [];
+    const addedItems: Partial<IShoppingCartItem>[] = [];
 
     // Create a map of existing items by ingredient name for easy lookup
     const existingItemsMap = new Map();
-    existingItems.forEach((item: any) => {
+    existingItems.forEach((item: IShoppingCartItem) => {
       existingItemsMap.set(item.ingredient.toLowerCase(), item);
     });
 
@@ -85,7 +85,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Remove old items for this recipe
-    cart.items = cart.items.filter((item: any) => item.recipeId !== recipeId);
+    cart.items = cart.items.filter((item: IShoppingCartItem) => item.recipeId !== recipeId);
 
     // Add updated and new items
     cart.items.push(...updatedItems, ...addedItems);
@@ -93,8 +93,8 @@ export async function PUT(request: NextRequest) {
     await cart.save();
 
     // Calculate what changed for user feedback
-    const preservedCount = updatedItems.filter((item: any) => 
-      existingItems.some((existing: any) => 
+    const preservedCount = updatedItems.filter((item: IShoppingCartItem) => 
+      existingItems.some((existing: IShoppingCartItem) => 
         existing.ingredient.toLowerCase() === item.ingredient.toLowerCase() && 
         existing.completed
       )

@@ -14,7 +14,7 @@ export async function GET() {
     await dbConnect();
     
     // Find the user's shopping cart
-    let cart = await ShoppingCart.findOne({ userId: session.user.id });
+    const cart = await ShoppingCart.findOne({ userId: session.user.id });
     
     // If no cart exists, return empty array
     if (!cart) {

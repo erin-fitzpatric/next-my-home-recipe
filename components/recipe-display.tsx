@@ -95,8 +95,8 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
         // Extract unique recipe IDs from cart items
         const recipeIds = new Set<string>(
           cartItems
-            .filter((item: any) => item.recipeId)
-            .map((item: any) => item.recipeId as string)
+            .filter((item: { recipeId?: string }) => item.recipeId)
+            .map((item: { recipeId: string }) => item.recipeId)
         );
         setRecipesInCart(recipeIds);
       }
@@ -143,7 +143,7 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
             } else {
               alert('Failed to delete recipe');
             }
-          } catch (error) {
+          } catch {
             alert('Failed to delete recipe');
           }
         }

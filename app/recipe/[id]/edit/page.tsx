@@ -18,26 +18,26 @@ export default function EditRecipePage() {
   const recipeId = params.id as string;
 
   useEffect(() => {
+    const fetchRecipe = async () => {
+      try {
+        const response = await fetch(`/api/recipes/${recipeId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setRecipe(data);
+        } else {
+          setError('Recipe not found');
+        }
+      } catch {
+        setError('Failed to load recipe');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (recipeId && session?.user?.id) {
       fetchRecipe();
     }
   }, [recipeId, session?.user?.id]);
-
-  const fetchRecipe = async () => {
-    try {
-      const response = await fetch(`/api/recipes/${recipeId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setRecipe(data);
-      } else {
-        setError('Recipe not found');
-      }
-    } catch (err) {
-      setError('Failed to load recipe');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (data: RecipeFormData) => {
     try {
@@ -68,7 +68,7 @@ export default function EditRecipePage() {
             const cartResponse = await fetch('/api/shopping-cart');
             if (cartResponse.ok) {
               const cartItems = await cartResponse.json();
-              const recipeInCart = cartItems.some((item: any) => item.recipeId === recipeId);
+              const recipeInCart = cartItems.some((item: { recipeId?: string }) => item.recipeId === recipeId);
               
               if (recipeInCart) {
                 toast.success('Shopping cart updated with new ingredients!', {
