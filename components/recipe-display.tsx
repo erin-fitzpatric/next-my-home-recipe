@@ -46,10 +46,12 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
+  const [recipesInCart, setRecipesInCart] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (session?.user?.id) {
       fetchRecipes();
+      fetchCartItems();
     }
   }, [session?.user?.id]);
 
@@ -69,6 +71,24 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
       setRecipes([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCartItems = async () => {
+    try {
+      const response = await fetch('/api/shopping-cart');
+      if (response.ok) {
+        const cartItems = await response.json();
+        // Extract unique recipe IDs from cart items
+        const recipeIds = new Set<string>(
+          cartItems
+            .filter((item: any) => item.recipeId)
+            .map((item: any) => item.recipeId as string)
+        );
+        setRecipesInCart(recipeIds);
+      }
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
     }
   };
 
@@ -160,23 +180,51 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
             alert('Recipe not found');
             return;
           }
+
+          const isInCart = recipesInCart.has(recipeId);
           
-          const response = await fetch('/api/shopping-cart', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              recipeId: recipe._id,
-              recipeTitle: recipe.title,
-              ingredients: recipe.ingredients,
-            }),
-          });
-          
-          if (response.ok) {
-            alert(`Added ingredients from "${recipe.title}" to shopping cart!`);
+          if (isInCart) {
+            // Remove from cart
+            const response = await fetch('/api/shopping-cart/remove-recipe', {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                recipeId: recipe._id,
+              }),
+            });
+            
+            if (response.ok) {
+              setRecipesInCart(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(recipeId);
+                return newSet;
+              });
+              alert(`🗑️ Removed "${recipe.title}" ingredients from your shopping cart!`);
+            } else {
+              alert('❌ Failed to remove from shopping cart. Please try again.');
+            }
           } else {
-            alert('Failed to add to shopping cart');
+            // Add to cart
+            const response = await fetch('/api/shopping-cart', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                recipeId: recipe._id,
+                recipeTitle: recipe.title,
+                ingredients: recipe.ingredients,
+              }),
+            });
+            
+            if (response.ok) {
+              setRecipesInCart(prev => new Set(prev).add(recipeId));
+              alert(`✅ Added ${recipe.ingredients.length} ingredients from "${recipe.title}" to your shopping cart!`);
+            } else {
+              alert('❌ Failed to add to shopping cart. Please try again.');
+            }
           }
         } catch (error) {
           console.error('Error adding to cart:', error);
@@ -351,15 +399,15 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
           )}
         </div>
       ) : viewMode === 'cards' ? (
-        <RecipeCards recipes={filteredRecipes} onAction={handleRecipeAction} />
+        <RecipeCards recipes={filteredRecipes} onAction={handleRecipeAction} recipesInCart={recipesInCart} />
       ) : (
-        <RecipeTable recipes={filteredRecipes} onAction={handleRecipeAction} />
+        <RecipeTable recipes={filteredRecipes} onAction={handleRecipeAction} recipesInCart={recipesInCart} />
       )}
     </div>
   );
 }
 
-function RecipeCards({ recipes, onAction }: { recipes: Recipe[]; onAction: (action: string, id: string) => void }) {
+function RecipeCards({ recipes, onAction, recipesInCart }: { recipes: Recipe[]; onAction: (action: string, id: string) => void; recipesInCart: Set<string> }) {
   const router = useRouter();
   
   return (
@@ -367,9 +415,27 @@ function RecipeCards({ recipes, onAction }: { recipes: Recipe[]; onAction: (acti
       {recipes.map((recipe) => (
         <Card 
           key={recipe._id} 
-          className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
+          className="relative group hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
           onClick={() => router.push(`/recipe/${recipe._id}`)}
         >
+          {/* Always Visible Cart Icon */}
+          <Button
+            size="sm"
+            variant={recipesInCart.has(recipe._id) ? "default" : "outline"}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction('addToCart', recipe._id);
+            }}
+            className={`absolute bottom-2 right-2 h-8 w-8 p-0 transition-all duration-200 z-10 ${
+              recipesInCart.has(recipe._id) 
+                ? 'bg-green-600 hover:bg-green-700 text-white border-green-600 shadow-md' 
+                : 'bg-white/95 hover:bg-white border-gray-300 hover:border-gray-400 shadow-sm'
+            }`}
+            title={recipesInCart.has(recipe._id) ? "Remove from shopping cart" : "Add to shopping cart"}
+          >
+            <ShoppingCart className="h-4 w-4" />
+          </Button>
+
           {/* Recipe Image */}
           {recipe.imageUrl && (
             <div className="relative h-48 w-full">
@@ -431,13 +497,6 @@ function RecipeCards({ recipes, onAction }: { recipes: Recipe[]; onAction: (acti
                     <Copy className="h-4 w-4 mr-2" />
                     Duplicate
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => {
-                    e.stopPropagation();
-                    onAction('addToCart', recipe._id);
-                  }}>
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -486,7 +545,7 @@ function RecipeCards({ recipes, onAction }: { recipes: Recipe[]; onAction: (acti
   );
 }
 
-function RecipeTable({ recipes, onAction }: { recipes: Recipe[]; onAction: (action: string, id: string) => void }) {
+function RecipeTable({ recipes, onAction, recipesInCart }: { recipes: Recipe[]; onAction: (action: string, id: string) => void; recipesInCart: Set<string> }) {
   const router = useRouter();
   
   return (
@@ -498,6 +557,7 @@ function RecipeTable({ recipes, onAction }: { recipes: Recipe[]; onAction: (acti
             <TableHead>Cook Time</TableHead>
             <TableHead>Servings</TableHead>
             <TableHead>Tags</TableHead>
+            <TableHead className="w-[60px] text-center">Cart</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -532,6 +592,24 @@ function RecipeTable({ recipes, onAction }: { recipes: Recipe[]; onAction: (acti
                   )}
                 </div>
               </TableCell>
+              <TableCell className="text-center">
+                <Button
+                  size="sm"
+                  variant={recipesInCart.has(recipe._id) ? "default" : "outline"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAction('addToCart', recipe._id);
+                  }}
+                  className={`h-8 w-8 p-0 transition-all duration-200 ${
+                    recipesInCart.has(recipe._id) 
+                      ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
+                      : 'bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400'
+                  }`}
+                  title={recipesInCart.has(recipe._id) ? "Remove from shopping cart" : "Add to shopping cart"}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                </Button>
+              </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -558,13 +636,6 @@ function RecipeTable({ recipes, onAction }: { recipes: Recipe[]; onAction: (acti
                     }}>
                       <Copy className="h-4 w-4 mr-2" />
                       Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      onAction('addToCart', recipe._id);
-                    }}>
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add to Cart
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={(e) => {
