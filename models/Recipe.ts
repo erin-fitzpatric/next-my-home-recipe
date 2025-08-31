@@ -19,7 +19,6 @@ export interface IRecipe extends Document {
   tags: string[];
   userId: string; // NextAuth user ID is a string
   imageUrl?: string;
-  isPublic: boolean;
   difficulty: 'easy' | 'medium' | 'hard';
   createdAt: Date;
   updatedAt: Date;
@@ -84,10 +83,6 @@ const RecipeSchema = new Schema<IRecipe>({
   },
   imageUrl: {
     type: String,
-  },
-  isPublic: {
-    type: Boolean,
-    default: false,
   },
   difficulty: {
     type: String,

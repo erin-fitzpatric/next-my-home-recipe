@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Minus, Clock, Users, ChefHat, X, ArrowLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { recipeSchema, type RecipeFormData, type Recipe, PRESET_TAGS, UNITS } from '@/lib/recipe-constants';
 
@@ -41,7 +40,6 @@ export function RecipeForm({ mode, initialData, onSubmit }: RecipeFormProps) {
         ingredients: [{ quantity: 1, unit: 'cup', displayText: '', notes: '' }],
         instructions: [{ step: '' }],
         tags: [],
-        isPublic: false,
         imageUrl: '',
       };
     } else {
@@ -56,7 +54,6 @@ export function RecipeForm({ mode, initialData, onSubmit }: RecipeFormProps) {
         ingredients: initialData?.ingredients || [{ quantity: 1, unit: 'cup', displayText: '', notes: '' }],
         instructions: initialData?.instructions?.map(step => ({ step })) || [{ step: '' }],
         tags: initialData?.tags || [],
-        isPublic: initialData?.isPublic || false,
         imageUrl: initialData?.imageUrl || '',
       };
     }
@@ -527,22 +524,6 @@ export function RecipeForm({ mode, initialData, onSubmit }: RecipeFormProps) {
                     ))}
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Optional Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Optional Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="isPublic"
-                  {...register('isPublic')}
-                />
-                <Label htmlFor="isPublic">Make this recipe public</Label>
               </div>
             </CardContent>
           </Card>

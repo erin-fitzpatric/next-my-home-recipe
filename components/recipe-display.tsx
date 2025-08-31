@@ -23,7 +23,7 @@ interface Recipe {
   difficulty: 'easy' | 'medium' | 'hard';
   tags: string[];
   ingredients: Array<{
-    name: string;
+    displayText: string;
     quantity: number;
     unit: string;
   }>;

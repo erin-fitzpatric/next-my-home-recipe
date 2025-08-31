@@ -18,7 +18,6 @@ export const recipeSchema = z.object({
     step: z.string().min(1, 'Instruction cannot be empty')
   })).min(1, 'At least one instruction is required'),
   tags: z.array(z.string()),
-  isPublic: z.boolean(),
   imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
@@ -57,5 +56,4 @@ export interface Recipe {
   }>;
   instructions: string[];
   imageUrl?: string;
-  isPublic: boolean;
 }

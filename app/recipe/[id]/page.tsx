@@ -25,7 +25,6 @@ interface Recipe {
   }>;
   instructions: string[];
   imageUrl?: string;
-  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -299,9 +298,6 @@ export default function RecipePage() {
           <p>
             Created: {new Date(recipe.createdAt).toLocaleDateString()} |
             Last updated: {new Date(recipe.updatedAt).toLocaleDateString()}
-          </p>
-          <p className="mt-1">
-            {recipe.isPublic ? 'Public recipe' : 'Private recipe'}
           </p>
         </div>
       </div>

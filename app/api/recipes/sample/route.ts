@@ -65,7 +65,6 @@ export async function POST() {
       servings: 4,
       tags: ["pasta", "italian", "dinner", "quick"],
       userId: session.user.id,
-      isPublic: false,
       difficulty: "easy" as const
     };
     
