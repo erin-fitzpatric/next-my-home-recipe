@@ -183,9 +183,19 @@ export default function ShoppingCartPage() {
   };
 
   const renderIngredientDisplay = (group: ConsolidatedIngredient) => {
+    // For consolidated items with valid quantities
     if (group.canConsolidate && group.totalQuantity > 0) {
       return `${group.totalQuantity} ${group.primaryUnit} ${group.baseIngredient}`;
     }
+    
+    // For single items, always show quantity regardless of canConsolidate
+    if (group.items.length === 1) {
+      const item = group.items[0];
+      return `${item.quantity} ${item.unit} ${item.ingredient}`;
+    }
+    
+    // For multiple items that can't be consolidated, just show the base ingredient
+    // Individual quantities will be shown in the expanded view
     return group.baseIngredient;
   };
 
