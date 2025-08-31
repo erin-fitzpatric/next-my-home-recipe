@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
 import { Recipe } from '@/models/Recipe';
+import { ShoppingCart } from '@/models/ShoppingCart';
 
 export async function GET(
   request: NextRequest,
@@ -62,8 +63,55 @@ export async function PUT(
     if (!recipe) {
       return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
     }
+
+    // Check if this recipe is in the user's shopping cart and update it
+    try {
+      const cart = await ShoppingCart.findOne({ userId: session.user.id });
+      
+      if (cart) {
+        const recipeInCart = cart.items.some((item: any) => item.recipeId === id);
+        
+        if (recipeInCart && recipe.ingredients) {
+          // Recipe is in cart, update the cart items
+          const existingItems = cart.items.filter((item: any) => item.recipeId === id);
+          
+          // Smart merge: preserve completion status for matching ingredients
+          const existingItemsMap = new Map();
+          existingItems.forEach((item: any) => {
+            existingItemsMap.set(item.ingredient.toLowerCase(), item);
+          });
+
+          // Remove old items for this recipe
+          cart.items = cart.items.filter((item: any) => item.recipeId !== id);
+
+          // Add updated ingredients
+          const updatedIngredients = recipe.ingredients.map((ingredient: any) => {
+            const existingItem = existingItemsMap.get(ingredient.displayText.toLowerCase());
+            
+            return {
+              recipeId: id,
+              recipeTitle: recipe.title,
+              ingredient: ingredient.displayText,
+              quantity: ingredient.quantity,
+              unit: ingredient.unit,
+              completed: existingItem ? existingItem.completed : false, // Preserve completion status
+              addedAt: existingItem ? existingItem.addedAt : new Date(),
+            };
+          });
+
+          cart.items.push(...updatedIngredients);
+          await cart.save();
+        }
+      }
+    } catch (cartError) {
+      console.error('Error updating cart after recipe edit:', cartError);
+      // Don't fail the recipe update if cart update fails
+    }
     
-    return NextResponse.json(recipe);
+    return NextResponse.json({
+      ...recipe.toObject(),
+      cartUpdated: true // Indicate that cart was checked/updated
+    });
   } catch (error) {
     console.error('Error updating recipe:', error);
     return NextResponse.json(

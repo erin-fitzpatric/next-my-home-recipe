@@ -56,6 +56,18 @@ export function RecipeDisplay({ viewMode, onViewModeChange }: RecipeDisplayProps
     }
   }, [session?.user?.id]);
 
+  // Refresh cart when window regains focus (in case cart was updated elsewhere)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (session?.user?.id) {
+        fetchCartItems();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [session?.user?.id]);
+
   const fetchRecipes = async () => {
     try {
       setLoading(true);

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { RecipeForm } from '@/components/recipe-form';
 import { Recipe, RecipeFormData } from '@/lib/recipe-constants';
+import { toast } from 'sonner';
 
 export default function EditRecipePage() {
   const params = useParams();
@@ -39,25 +40,56 @@ export default function EditRecipePage() {
   };
 
   const handleSubmit = async (data: RecipeFormData) => {
-    // Transform instructions from objects to strings for API
-    const transformedData = {
-      ...data,
-      instructions: data.instructions.map(instruction => instruction.step)
-    };
+    try {
+      // Transform instructions from objects to strings for API
+      const transformedData = {
+        ...data,
+        instructions: data.instructions.map(instruction => instruction.step)
+      };
 
-    const response = await fetch(`/api/recipes/${recipeId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(transformedData),
-    });
+      const response = await fetch(`/api/recipes/${recipeId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(transformedData),
+      });
 
-    if (response.ok) {
-      router.push(`/recipe/${recipeId}`);
-    } else {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to update recipe');
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Show success toast
+        toast.success('Recipe updated successfully!');
+        
+        // Check if shopping cart was updated
+        if (result.cartUpdated) {
+          // Additional check to see if recipe was actually in cart
+          try {
+            const cartResponse = await fetch('/api/shopping-cart');
+            if (cartResponse.ok) {
+              const cartItems = await cartResponse.json();
+              const recipeInCart = cartItems.some((item: any) => item.recipeId === recipeId);
+              
+              if (recipeInCart) {
+                toast.success('Shopping cart updated with new ingredients!', {
+                  description: 'Completed items were preserved where possible.'
+                });
+              }
+            }
+          } catch (cartError) {
+            console.error('Error checking cart status:', cartError);
+          }
+        }
+        
+        router.push(`/recipe/${recipeId}`);
+      } else {
+        const error = await response.json();
+        toast.error('Failed to update recipe');
+        throw new Error(error.message || 'Failed to update recipe');
+      }
+    } catch (error) {
+      console.error('Error updating recipe:', error);
+      toast.error('Failed to update recipe');
     }
   };
 
