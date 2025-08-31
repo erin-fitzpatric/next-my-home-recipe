@@ -33,9 +33,11 @@ export const PRESET_TAGS = [
 
 // Common units
 export const UNITS = [
-  'bottle', 'can', 'clove', 'cup', 'dash', 'gram', 'kg', 'lb', 'oz',
-  'package', 'piece', 'pinch', 'slice', 'tablespoon', 'teaspoon',
-  'to taste', 'whole'
+  'bag', 'bottle', 'box', 'bulb', 'bunch', 'can', 'carton', 'centimeter', 'clove', 
+  'cup', 'dash', 'fl oz', 'gallon', 'gram', 'handful', 'head', 'inch', 'jar', 
+  'kg', 'lb', 'leaf', 'liter', 'milligram', 'milliliter', 'oz', 'package', 
+  'piece', 'pinch', 'pint', 'quart', 'slice', 'sprig', 'stalk', 'stick', 
+  'tablespoon', 'teaspoon', 'tin', 'to taste', 'ton', 'tube', 'whole', 'zest'
 ];
 
 // Recipe interface for editing
