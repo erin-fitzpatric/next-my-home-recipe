@@ -2,6 +2,8 @@
 
 A modern recipe management application built with Next.js 15, TypeScript, and MongoDB. Manage your recipes, create smart shopping lists, and organize your cooking with a beautiful, responsive interface.
 
+🌐 **Live Demo**: [https://recipe.erinfitzpatric.com](https://recipe.erinfitzpatric.com)
+
 ## ✨ Features
 
 ### Recipe Management
@@ -26,12 +28,17 @@ A modern recipe management application built with Next.js 15, TypeScript, and Mo
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 🌐 Try the Live App
+Visit [https://recipe.erinfitzpatric.com](https://recipe.erinfitzpatric.com) to use the app immediately!
+
+### 💻 Local Development
+
+#### Prerequisites
 - Node.js 18+
 - MongoDB Atlas account
 - Google OAuth credentials
 
-### Installation
+#### Installation
 
 1. **Clone and install**
    ```bash
@@ -95,6 +102,13 @@ lib/
 
 ## 🎯 Development Status
 
+### ✅ Production Ready
+- **Live Application**: Deployed at [recipe.erinfitzpatric.com](https://recipe.erinfitzpatric.com)
+- **Custom Domain**: Configured with Namecheap DNS
+- **Production Database**: MongoDB Atlas with proper network access
+- **OAuth Authentication**: Google OAuth published and verified
+- **SSL Certificate**: Automatic HTTPS via Vercel
+
 ### ✅ Current Features
 - Complete recipe CRUD operations
 - Smart shopping cart with consolidation
@@ -102,12 +116,15 @@ lib/
 - Unit conversion and quantity aggregation
 - Google OAuth authentication
 - Responsive design
+- Production deployment on Vercel
 
-### 🚧 Planned Features
-- Recipe import/export
-- Meal planning
-- Recipe sharing
+### 🚧 Future Enhancements
+- Recipe import/export functionality
+- Meal planning with calendar integration
+- Recipe sharing between users
 - Advanced search filters
+- PWA capabilities for mobile app experience
+- Recipe analytics and favorites tracking
 
 ## 🔧 Development
 
@@ -118,6 +135,23 @@ pnpm dev          # Development server
 pnpm build        # Production build
 pnpm lint         # Code quality check
 ```
+
+## 🚀 Deployment
+
+This app is deployed on **Vercel** with:
+- **Custom domain**: recipe.erinfitzpatric.com
+- **Automatic deployments**: Every push to main branch
+- **Environment variables**: Securely configured in Vercel dashboard
+- **MongoDB Atlas**: Production database with network access configured
+- **Google OAuth**: Published app with production credentials
+
+### Deploy Your Own Instance
+1. Fork this repository
+2. Connect to Vercel via GitHub
+3. Configure environment variables
+4. Set up custom domain (optional)
+5. Configure MongoDB Atlas network access
+6. Publish Google OAuth consent screen
 
 ## 📝 License
 
