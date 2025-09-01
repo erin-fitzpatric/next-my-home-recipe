@@ -3,6 +3,7 @@
 A modern recipe management application built with Next.js 15, TypeScript, and MongoDB. Manage your recipes, create smart shopping lists, and organize your cooking with a beautiful, responsive interface.
 
 🌐 **Live Demo**: [https://recipe.erinfitzpatric.com](https://recipe.erinfitzpatric.com)
+📹https://youtu.be/CZDh8CLZTDM
 
 ## ✨ Features
 
