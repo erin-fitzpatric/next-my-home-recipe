@@ -74,6 +74,9 @@ Visit [https://recipe.erinfitzpatric.com](https://recipe.erinfitzpatric.com) to 
 - **Forms**: React Hook Form with Zod validation
 - **Package Manager**: pnpm
 
+## Architecture
+<img width="1181" height="461" alt="recipe drawio" src="https://github.com/user-attachments/assets/c2660b57-df3a-49a6-a6c2-0df42623fdf7" />
+
 ## 📁 Project Structure
 
 ```
